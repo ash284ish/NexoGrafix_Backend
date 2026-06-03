@@ -48,7 +48,7 @@ jobs:
 
       - name: Install deployment tools
         run: |
-          sudo apt-get update && sudo apt-get install -y sshpass netcat-openbsd
+          sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
       - name: Network Diagnostic
         run: |
@@ -61,22 +61,25 @@ jobs:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
 
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
       - name: Create and set permissions for target directory
         run: |
-          sshpass -e ssh -4 -o StrictHostKeyChecking=no \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -p "${HOSTINGER_SSH_PORT}" \
+          ssh -i ~/.ssh/id_ed25519 -p "${HOSTINGER_SSH_PORT}" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
-            sudo mkdir -p '${HOSTINGER_APP_DIR}'
-            sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} '${HOSTINGER_APP_DIR}'
-          "
+            sudo mkdir -p \"${HOSTINGER_APP_DIR}\"
+            sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} \"${HOSTINGER_APP_DIR}\"
+            "
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
-          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Sync files to Hostinger
         run: |
@@ -93,7 +96,7 @@ jobs:
             --exclude 'public/uploads/' \
             --exclude 'backend/app/public/uploads/' \
             --exclude 'backend/public/uploads/' \
-            -e "sshpass -e ssh -4 -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no -p ${HOSTINGER_SSH_PORT}" \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${HOSTINGER_SSH_PORT}" \
             ./ \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}:${HOSTINGER_APP_DIR}/"
         env:
@@ -101,17 +104,14 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
-          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Install dependencies and restart service
         run: |
-          sshpass -e ssh -4 -o StrictHostKeyChecking=no \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -p "${HOSTINGER_SSH_PORT}" \
+          ssh -i ~/.ssh/id_ed25519 -p "${HOSTINGER_SSH_PORT}" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             set -euo pipefail
-            cd '${HOSTINGER_APP_DIR}'
+            cd \"${HOSTINGER_APP_DIR}\"
             if [ ! -d venv ]; then
               python3 -m venv venv
             fi
@@ -119,18 +119,16 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements.txt
             mkdir -p app/public/uploads public/uploads backend/app/public/uploads backend/public/uploads
+            
             # Check if systemd service is configured and loaded
-            if command -v systemctl >/dev/null 2>&1 && [ -n \"${HOSTINGER_SERVICE_NAME:-}\" ] && systemctl show \"${HOSTINGER_SERVICE_NAME}\" --property=LoadState 2>/dev/null | grep -q \"LoadState=loaded\"; then
+            if command -v systemctl >/dev/null 2>&1 && [ -n \"${HOSTINGER_SERVICE_NAME}\" ] && systemctl show \"${HOSTINGER_SERVICE_NAME}\" --property=LoadState 2>/dev/null | grep -q \"LoadState=loaded\"; then
               echo \"Systemd service detected. Restarting service...\"
               sudo systemctl restart \"${HOSTINGER_SERVICE_NAME}\"
               sudo systemctl --no-pager --full status \"${HOSTINGER_SERVICE_NAME}\"
             else
               echo \"Systemd service not found or not loaded. Running in background with nohup...\"
-              # Kill any existing process running on port 8000 or matching uvicorn main:app
-              sudo fuser -k 8000/tcp || pkill -f \"uvicorn main:app\" || true
-              # Run in background with nohup, redirecting stdin/stdout/stderr to prevent termination and terminal hang
+              sudo fuser -k 8000/tcp || sudo pkill -f \"uvicorn main:app\" || true
               nohup venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 < /dev/null &
-              # Wait a moment to check if it started successfully
               sleep 3
               if pgrep -f \"uvicorn main:app\" > /dev/null; then
                 echo \"Application started successfully in the background!\"
@@ -140,11 +138,10 @@ jobs:
                 exit 1
               fi
             fi
-          "
+            "
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
           HOSTINGER_SERVICE_NAME: ${{ secrets.HOSTINGER_SERVICE_NAME }}
-          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
