@@ -65,8 +65,23 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -l -f ~/.ssh/id_ed25519
+
+      - name: Verify SSH connection
+        run: |
+          echo "Testing SSH connection..."
+          ssh -i ~/.ssh/id_ed25519 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -p "$HOSTINGER_SSH_PORT" \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" "echo 'SSH connection successful'"
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
 
       - name: Create and set permissions for target directory
         run: |
@@ -120,7 +135,7 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements.txt
             mkdir -p app/public/uploads public/uploads backend/app/public/uploads backend/public/uploads
-            
+
             # Check if systemd service is configured and loaded
             if command -v systemctl >/dev/null 2>&1 && [ -n \"${HOSTINGER_SERVICE_NAME}\" ] && systemctl show \"${HOSTINGER_SERVICE_NAME}\" --property=LoadState 2>/dev/null | grep -q \"LoadState=loaded\"; then
               echo \"Systemd service detected. Restarting service...\"
