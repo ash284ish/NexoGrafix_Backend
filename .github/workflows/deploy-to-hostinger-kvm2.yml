@@ -63,8 +63,10 @@ jobs:
 
       - name: Create and set permissions for target directory
         run: |
-          export SSHPASS="$HOSTINGER_PASSWORD"
-          sshpass -e ssh -4 -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+          sshpass -e ssh -4 -o StrictHostKeyChecking=no \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            -p "${HOSTINGER_SSH_PORT}" \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             sudo mkdir -p '${HOSTINGER_APP_DIR}'
             sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} '${HOSTINGER_APP_DIR}'
@@ -74,11 +76,10 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
-          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
+          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Sync files to Hostinger
         run: |
-          export SSHPASS="$HOSTINGER_PASSWORD"
           rsync -az --delete \
             --exclude '.git/' \
             --exclude '.github/' \
@@ -92,7 +93,7 @@ jobs:
             --exclude 'public/uploads/' \
             --exclude 'backend/app/public/uploads/' \
             --exclude 'backend/public/uploads/' \
-            -e "sshpass -e ssh -4 -o StrictHostKeyChecking=no -p ${HOSTINGER_SSH_PORT}" \
+            -e "sshpass -e ssh -4 -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no -p ${HOSTINGER_SSH_PORT}" \
             ./ \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}:${HOSTINGER_APP_DIR}/"
         env:
@@ -100,12 +101,14 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
-          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
+          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Install dependencies and restart service
         run: |
-          export SSHPASS="$HOSTINGER_PASSWORD"
-          sshpass -e ssh -4 -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+          sshpass -e ssh -4 -o StrictHostKeyChecking=no \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            -p "${HOSTINGER_SSH_PORT}" \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             set -euo pipefail
             cd '${HOSTINGER_APP_DIR}'
@@ -144,4 +147,4 @@ jobs:
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
           HOSTINGER_SERVICE_NAME: ${{ secrets.HOSTINGER_SERVICE_NAME }}
-          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
+          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
