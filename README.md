@@ -104,6 +104,28 @@ The API will be available at `http://localhost:8000`.
 - **API Documentation (Swagger UI):** `http://localhost:8000/docs`
 - **Health Check:** `http://localhost:8000/health`
 
+## Deployment
+
+This repository includes a GitHub Actions workflow that deploys the backend to a Hostinger KVM2 server over SSH.
+
+### Required GitHub Secrets
+
+- `HOSTINGER_HOST` - server IP or hostname
+- `HOSTINGER_USER` - SSH username on the server
+- `HOSTINGER_SSH_KEY` - private SSH key with access to the server
+- `HOSTINGER_SSH_PORT` - SSH port, usually `22`
+- `HOSTINGER_APP_DIR` - absolute path to the application directory on the server
+- `HOSTINGER_SERVICE_NAME` - systemd service name used to restart the API process
+
+### Server Requirements
+
+- Python 3.10+ installed on the server
+- A `venv`-based environment in the application directory
+- A systemd service that starts the app with Uvicorn or Gunicorn
+- A persistent `.env` file on the server with at least `DATABASE_URL` and `APP_URL`
+
+The workflow syncs the repository contents to the server, installs Python dependencies, and restarts the service after a successful validation step.
+
 ## API Endpoints Overview
 
 - `/api/v1/content`: Manage website sections via JSON.
