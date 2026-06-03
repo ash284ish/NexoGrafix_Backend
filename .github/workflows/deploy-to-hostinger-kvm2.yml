@@ -49,7 +49,8 @@ jobs:
       - name: Configure SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "$HOSTINGER_SSH_KEY" > ~/.ssh/id_rsa
+          echo "$HOSTINGER_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          echo "" >> ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "$HOSTINGER_SSH_PORT" "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
         env:
@@ -128,7 +129,7 @@ jobs:
             fi
           "
         env:
-          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}${{ secrets.HOSTINGER_APP_DIR }}
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
