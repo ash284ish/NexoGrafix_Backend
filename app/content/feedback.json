@@ -1,0 +1,280 @@
+{
+  "meta": {
+    "title": "Testimonials • Nexografix"
+  },
+  "filters": [
+    "All",
+    "Publishing",
+    "Content",
+    "Assessments",
+    "Automation",
+    "Accessibility",
+    "Engineering",
+    "Ebook"
+  ],
+  "hero": {
+    "badge": "TESTIMONIALS",
+    "title": "Trusted by delivery teams worldwide",
+    "subtitle": "Real feedback from publishing, content, assessments, automation, and accessibility workflows."
+  },
+  "stats": {
+    "items": [
+      {
+        "key": "workflows_delivered",
+        "label": "WORKFLOWS DELIVERED",
+        "value": 120,
+        "suffix": "+"
+      },
+      {
+        "key": "teams_supported",
+        "label": "TEAMS SUPPORTED",
+        "value": 48,
+        "suffix": "+"
+      },
+      {
+        "key": "on_time_delivery",
+        "label": "ON-TIME DELIVERY",
+        "value": 98,
+        "suffix": "%"
+      }
+    ]
+  },
+  "empty_state": {
+    "title": "No testimonials found",
+    "subtitle": "Try selecting another category or switch back to All."
+  },
+  "bottom_section": {
+    "left": {
+      "badge": "SHARE FEEDBACK",
+      "title": "Help others make confident decision",
+      "subtitle": "If you’ve worked with Nexografix, we’d appreciate your honest feedback. Your input helps teams evaluate quality, reliability, and delivery standards.",
+      "highlights": [
+        "Short, clean form — no unnecessary fields",
+        "Optional publish permission — you stay in control",
+        "Helps future teams evaluate faster and more confidently",
+        "We may reach out if we need clarification (optional)"
+      ]
+    },
+    "right": {
+      "badge": "FEEDBACK FORM",
+      "subtitle": "Quick to fill. Professional format.",
+      "fields": [
+        {
+          "key": "first_name",
+          "label": "First name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "last_name",
+          "label": "Last name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "role",
+          "label": "Role (optional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "company",
+          "label": "Company (optional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "service",
+          "label": "Select service",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Publishing",
+            "Publing",
+            "Content",
+            "Assessments",
+            "Automation",
+            "Accessibility",
+            "Engineering",
+            "Ebook"
+          ]
+        },
+        {
+          "key": "rating",
+          "label": "Rating",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "★★★★★ (5)",
+              "value": 5
+            },
+            {
+              "label": "★★★★☆ (4)",
+              "value": 4
+            },
+            {
+              "label": "★★★☆☆ (3)",
+              "value": 3
+            },
+            {
+              "label": "★★☆☆☆ (2)",
+              "value": 2
+            },
+            {
+              "label": "★☆☆☆☆ (1)",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "message",
+          "label": "Write your feedback...",
+          "type": "textarea",
+          "rows": 5,
+          "required": true
+        },
+        {
+          "key": "publish_permission",
+          "label": "You may allow us to publish this feedback on Nexografix's website (optional).",
+          "type": "checkbox",
+          "required": false
+        }
+      ],
+      "submit_label": "Submit Feedback",
+      "thanks_note": "Thank you — we appreciate your time."
+    }
+  },
+  "testimonials": [
+    {
+      "id": "t1",
+      "first_name": "Sofia",
+      "last_name": "Carter",
+      "role": "Academic Program Manager",
+      "service": "Assessments",
+      "rating": 2,
+      "message": "Assessmenstttststs development was smooth and well-governed. Authoring, reviews, validation, and delivery followed a disciplined process. Communication was proactive, and milestones were met without last-minute escalations.",
+      "avatar_url": "https://nexografix.com/api/uploads/testimonials/image 19 (1).png"
+    },
+    {
+      "id": "t2",
+      "first_name": "Daniel",
+      "last_name": "Kim",
+      "role": "Automation Lead",
+      "service": "Automation",
+      "rating": 5,
+      "message": "AI-enabled automation improved our turnaround without sacrificing quality. Their process is repeatable and scalable.",
+      "avatar_url": "https://nexografix.com/api/uploads/testimonials/flag.png"
+    },
+    {
+      "id": "t3",
+      "first_name": "Neha",
+      "last_name": "Verma",
+      "role": "Accessibility & Compliance Consultant",
+      "service": "Accessibility",
+      "rating": 5,
+      "message": "Accessibility was handled with real domain understanding. The team knew WCAG expectations in practice, not just theory. Audits were detailed, remediation was clean, and the final outputs passed compliance checks without rework.",
+      "avatar_url": "https://i.pravatar.cc/120?img=32"
+    },
+    {
+      "id": "t4",
+      "first_name": "James",
+      "last_name": "Wilson",
+      "role": "Publishing Operations Lead",
+      "service": "Publishing",
+      "rating": 5,
+      "message": "Nexografix brought structure to our publishing operations. Their workflow was clearly defined from intake to delivery, with strong QA checkpoints and transparent reporting. We saw fewer revisions, better consistency, and predictable timelines across batches.",
+      "avatar_url": "https://nexografix.com/api/uploads/testimonials/live_tv.png"
+    },
+    {
+      "id": "t5",
+      "first_name": "Ananya",
+      "last_name": "Sharma",
+      "role": "Publishing Ops Lead",
+      "service": "Publishing",
+      "rating": 5,
+      "message": "Handled our publishing pipeline with discipline. Timelines were met, QA quality stayed consistent, and reporting was clear.",
+      "avatar_url": "https://i.pravatar.cc/120?img=47"
+    },
+    {
+      "id": "t6",
+      "first_name": "Priya",
+      "last_name": "Nair",
+      "role": "Content Ops Manager",
+      "service": "Content",
+      "rating": 5,
+      "message": "Quality checks were consistent, and reporting was easy to track. Very reliable delivery.",
+      "avatar_url": "https://i.pravatar.cc/120?img=21"
+    },
+    {
+      "id": "t8",
+      "first_name": "Priya",
+      "last_name": "Nair",
+      "role": "Content Ops Manager",
+      "service": "Content",
+      "rating": 5,
+      "message": "Quality checks were consistent, and reporting was easy to track. Very reliable delivery.",
+      "avatar_url": "https://i.pravatar.cc/120?img=21"
+    },
+    {
+      "id": "t9",
+      "first_name": "Karan",
+      "last_name": "Patel",
+      "role": "Program Manager",
+      "service": "Publishing",
+      "rating": 4,
+      "message": "Process is well-structured. Good coordination across stakeholders with minimal friction.",
+      "avatar_url": "https://i.pravatar.cc/120?img=61"
+    },
+    {
+      "id": "t10",
+      "first_name": "Meerass",
+      "last_name": "Iyerss",
+      "role": "Enterprise Automation Lead",
+      "service": "Automation",
+      "rating": 5,
+      "message": "Automation setup reduced repetitive work quickly. The rollout was smooth with clear documentation.",
+      "avatar_url": "https://i.pravatar.cc/120?img=29"
+    },
+    {
+      "id": "t11",
+      "first_name": "Meerass",
+      "last_name": "Iyerss",
+      "role": "Enterprise Automation Lead",
+      "service": "Automations",
+      "rating": 4,
+      "message": "Their AI-enabled automation improved turnaround while keeping quality intact. What stood out was execution control—clear ownership, QA visibility, and repeatable delivery standards that scale across teams.",
+      "avatar_url": "https://i.pravatar.cc/120?img=29"
+    },
+    {
+      "id": "t12",
+      "first_name": "Me",
+      "last_name": "Iye",
+      "role": "Automation Analysts",
+      "service": "Automations",
+      "rating": 2,
+      "message": "Automation setup reduced repetitive work quickly. The rollout was smooth with clear documentation.",
+      "avatar_url": "https://img.freepik.com/free-psd/3d-illustration-person-with-rainbow-sunglasses_23-2149436196.jpg?semt=ais_user_personalization&w=740&q=80"
+    },
+    {
+      "id": "t13",
+      "first_name": "Me",
+      "last_name": "Iye",
+      "role": "Automation Analysts",
+      "service": "Automations",
+      "rating": 2,
+      "message": "Automation setup reduced repetitive work quickly. The rollout was smooth with clear documentation.",
+      "avatar_url": "https://img.freepik.com/free-psd/3d-illustration-person-with-rainbow-sunglasses_23-2149436196.jpg?semt=ais_user_personalization&w=740&q=80"
+    },
+    {
+      "id": "t14",
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "Enterprise Delivery",
+      "service": "Publishing",
+      "rating": 5,
+      "message": "Our association with Nexografix has significantly streamlined the execution of projects with tight deadlines. Their prompt and consistent responsiveness has been outstanding from the beginning. Aashish has ensured that all deliverables meet our requirements while proactively adapting to new processes to achieve timely and efficient outcomes.",
+      "avatar_url": "https://img.freepik.com/free-psd/3d-illustration-person-with-rainbow-sunglasses_23-2149436196.jpg?semt=ais_user_personalization&w=740&q=80"
+    }
+  ]
+}
