@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
 
 concurrency:
@@ -13,74 +12,78 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate Application
+    name: Validate application
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12.10"
-          cache: "pip"
+          cache: pip
 
-      - name: Create Virtual Environment
+      - name: Install dependencies
         run: |
           python -m venv venv
-
-      - name: Install Dependencies
-        run: |
           source venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Validate Python Files
+      - name: Compile Python files
         run: |
           source venv/bin/activate
           python -m compileall main.py app create_tables.py seed.py
 
   deploy:
-    name: Deploy To Hostinger VPS
+    name: Deploy to server
     needs: validate
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Configure SSH
+      - name: Install deployment tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y netcat-openbsd
+
+      - name: Network Diagnostic
+        run: |
+          echo "Testing connectivity to $HOSTINGER_HOST on port $HOSTINGER_SSH_PORT..."
+          if ! nc -zv -w 10 "$HOSTINGER_HOST" "$HOSTINGER_SSH_PORT"; then
+            echo "::error::Cannot reach the server on port $HOSTINGER_SSH_PORT. Please check your Hostinger Panel Firewall and Server UFW settings."
+            exit 1
+          fi
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+
+      - name: Configure SSH key
         run: |
           mkdir -p ~/.ssh
-
           echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
-
           chmod 600 ~/.ssh/id_ed25519
 
-          ssh-keyscan -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Test SSH Connection
+      - name: Create and set permissions for target directory
         run: |
-          ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
-            "echo SSH CONNECTION SUCCESS"
-
-      - name: Create Application Directory
-        run: |
-          ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          ssh -i ~/.ssh/id_ed25519 -p "${HOSTINGER_SSH_PORT}" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
+            sudo mkdir -p \"${HOSTINGER_APP_DIR}\"
+            sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} \"${HOSTINGER_APP_DIR}\"
             "
-              mkdir -p '${{ secrets.HOSTINGER_APP_DIR }}'
-            "
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
 
-      - name: Sync Project Files
+      - name: Sync files to Hostinger
         run: |
-          rsync -avz --delete \
+          rsync -az --delete \
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude '.env' \
@@ -89,65 +92,56 @@ jobs:
             --exclude '*.pyc' \
             --exclude '.pytest_cache/' \
             --exclude '.mypy_cache/' \
-            --exclude 'node_modules/' \
             --exclude 'app/public/uploads/' \
             --exclude 'public/uploads/' \
             --exclude 'backend/app/public/uploads/' \
             --exclude 'backend/public/uploads/' \
-            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${HOSTINGER_SSH_PORT}" \
             ./ \
-            "${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_APP_DIR }}/"
+            "${HOSTINGER_USER}@${HOSTINGER_HOST}:${HOSTINGER_APP_DIR}/"
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
 
-      - name: Install Dependencies And Restart Application
+      - name: Install dependencies and restart service
         run: |
-          ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
-            "
-              set -e
-
-              cd '${{ secrets.HOSTINGER_APP_DIR }}'
-
-              if [ ! -d venv ]; then
-                python3 -m venv venv
-              fi
-
-              source venv/bin/activate
-
-              python -m pip install --upgrade pip
-
-              pip install -r requirements.txt
-
-              mkdir -p app/public/uploads
-              mkdir -p public/uploads
-              mkdir -p backend/app/public/uploads
-              mkdir -p backend/public/uploads
-
-              sudo pkill -f 'uvicorn main:app' || true
-
-              nohup venv/bin/uvicorn main:app \
-                --host 0.0.0.0 \
-                --port 8000 \
-                > uvicorn.log 2>&1 &
-
-              sleep 5
-
-              if pgrep -f 'uvicorn main:app' > /dev/null; then
-                echo 'Application Started Successfully'
+          ssh -i ~/.ssh/id_ed25519 -p "${HOSTINGER_SSH_PORT}" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
+            set -euo pipefail
+            cd \"${HOSTINGER_APP_DIR}\"
+            if [ ! -d venv ]; then
+              python3 -m venv venv
+            fi
+            . venv/bin/activate
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            mkdir -p app/public/uploads public/uploads backend/app/public/uploads backend/public/uploads
+            
+            # Check if systemd service is configured and loaded
+            if command -v systemctl >/dev/null 2>&1 && [ -n \"${HOSTINGER_SERVICE_NAME}\" ] && systemctl show \"${HOSTINGER_SERVICE_NAME}\" --property=LoadState 2>/dev/null | grep -q \"LoadState=loaded\"; then
+              echo \"Systemd service detected. Restarting service...\"
+              sudo systemctl restart \"${HOSTINGER_SERVICE_NAME}\"
+              sudo systemctl --no-pager --full status \"${HOSTINGER_SERVICE_NAME}\"
+            else
+              echo \"Systemd service not found or not loaded. Running in background with nohup...\"
+              sudo fuser -k 8000/tcp || sudo pkill -f \"uvicorn main:app\" || true
+              nohup venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 < /dev/null &
+              sleep 3
+              if pgrep -f \"uvicorn main:app\" > /dev/null; then
+                echo \"Application started successfully in the background!\"
               else
-                echo 'Application Failed To Start'
+                echo \"Application failed to start. Showing log file:\"
                 cat uvicorn.log
                 exit 1
               fi
+            fi
             "
-
-      - name: Verify Deployment
-        run: |
-          ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
-            "
-              ps aux | grep uvicorn
-            "
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
+          HOSTINGER_SERVICE_NAME: ${{ secrets.HOSTINGER_SERVICE_NAME }}
