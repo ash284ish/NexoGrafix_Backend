@@ -46,11 +46,25 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Install deployment tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y sshpass netcat-openbsd
+
+      - name: Network Diagnostic
+        run: |
+          echo "Testing connectivity to $HOSTINGER_HOST on port $HOSTINGER_SSH_PORT..."
+          if ! nc -zv -w 10 "$HOSTINGER_HOST" "$HOSTINGER_SSH_PORT"; then
+            echo "::error::Cannot reach the server on port $HOSTINGER_SSH_PORT. Please check your Hostinger Panel Firewall and Server UFW settings."
+            exit 1
+          fi
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+
       - name: Create and set permissions for target directory
         run: |
-          sudo apt-get update && sudo apt-get install -y sshpass
           export SSHPASS="$HOSTINGER_PASSWORD"
-          sshpass -e ssh -v -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+          sshpass -e ssh -4 -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             sudo mkdir -p '${HOSTINGER_APP_DIR}'
             sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} '${HOSTINGER_APP_DIR}'
@@ -78,7 +92,7 @@ jobs:
             --exclude 'public/uploads/' \
             --exclude 'backend/app/public/uploads/' \
             --exclude 'backend/public/uploads/' \
-            -e "sshpass -e ssh -o StrictHostKeyChecking=no -p ${HOSTINGER_SSH_PORT}" \
+            -e "sshpass -e ssh -4 -o StrictHostKeyChecking=no -p ${HOSTINGER_SSH_PORT}" \
             ./ \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}:${HOSTINGER_APP_DIR}/"
         env:
@@ -91,7 +105,7 @@ jobs:
       - name: Install dependencies and restart service
         run: |
           export SSHPASS="$HOSTINGER_PASSWORD"
-          sshpass -e ssh -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+          sshpass -e ssh -4 -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             set -euo pipefail
             cd '${HOSTINGER_APP_DIR}'
@@ -103,7 +117,7 @@ jobs:
             pip install -r requirements.txt
             mkdir -p app/public/uploads public/uploads backend/app/public/uploads backend/public/uploads
             # Check if systemd service is configured and loaded
-            if command -v systemctl >/dev/null 2>&1 && [ -n "${HOSTINGER_SERVICE_NAME:-}" ] && systemctl show "${HOSTINGER_SERVICE_NAME}" --property=LoadState 2>/dev/null | grep -q "LoadState=loaded"; then
+            if command -v systemctl >/dev/null 2>&1 && [ -n \"${HOSTINGER_SERVICE_NAME:-}\" ] && systemctl show \"${HOSTINGER_SERVICE_NAME}\" --property=LoadState 2>/dev/null | grep -q \"LoadState=loaded\"; then
               echo \"Systemd service detected. Restarting service...\"
               sudo systemctl restart \"${HOSTINGER_SERVICE_NAME}\"
               sudo systemctl --no-pager --full status \"${HOSTINGER_SERVICE_NAME}\"
