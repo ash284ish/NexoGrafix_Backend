@@ -46,18 +46,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Configure SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "$HOSTINGER_SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          echo "" >> ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "$HOSTINGER_SSH_PORT" "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
-        env:
-          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
-          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
-          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-
       - name: Create and set permissions for target directory
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
