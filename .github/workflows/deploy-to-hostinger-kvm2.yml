@@ -60,7 +60,10 @@ jobs:
 
       - name: Create and set permissions for target directory
         run: |
-          ssh -i ~/.ssh/id_rsa -p "${HOSTINGER_SSH_PORT}" "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
+          sudo apt-get update && sudo apt-get install -y sshpass
+          export SSHPASS="$HOSTINGER_PASSWORD"
+          sshpass -e ssh -v -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+            "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             sudo mkdir -p '${HOSTINGER_APP_DIR}'
             sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} '${HOSTINGER_APP_DIR}'
           "
@@ -69,9 +72,11 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
+          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Sync files to Hostinger
         run: |
+          export SSHPASS="$HOSTINGER_PASSWORD"
           rsync -az --delete \
             --exclude '.git/' \
             --exclude '.github/' \
@@ -85,7 +90,7 @@ jobs:
             --exclude 'public/uploads/' \
             --exclude 'backend/app/public/uploads/' \
             --exclude 'backend/public/uploads/' \
-            -e "ssh -i ~/.ssh/id_rsa -p ${HOSTINGER_SSH_PORT}" \
+            -e "sshpass -e ssh -o StrictHostKeyChecking=no -p ${HOSTINGER_SSH_PORT}" \
             ./ \
             "${HOSTINGER_USER}@${HOSTINGER_HOST}:${HOSTINGER_APP_DIR}/"
         env:
@@ -93,10 +98,13 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
+          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
 
       - name: Install dependencies and restart service
         run: |
-          ssh -i ~/.ssh/id_rsa -p "${HOSTINGER_SSH_PORT}" "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
+          export SSHPASS="$HOSTINGER_PASSWORD"
+          sshpass -e ssh -o StrictHostKeyChecking=no -p "${HOSTINGER_SSH_PORT}" \
+            "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
             set -euo pipefail
             cd '${HOSTINGER_APP_DIR}'
             if [ ! -d venv ]; then
@@ -108,21 +116,21 @@ jobs:
             mkdir -p app/public/uploads public/uploads backend/app/public/uploads backend/public/uploads
             # Check if systemd service is configured and loaded
             if command -v systemctl >/dev/null 2>&1 && [ -n "${HOSTINGER_SERVICE_NAME:-}" ] && systemctl show "${HOSTINGER_SERVICE_NAME}" --property=LoadState 2>/dev/null | grep -q "LoadState=loaded"; then
-              echo "Systemd service detected. Restarting service..."
-              sudo systemctl restart "${HOSTINGER_SERVICE_NAME}"
-              sudo systemctl --no-pager --full status "${HOSTINGER_SERVICE_NAME}"
+              echo \"Systemd service detected. Restarting service...\"
+              sudo systemctl restart \"${HOSTINGER_SERVICE_NAME}\"
+              sudo systemctl --no-pager --full status \"${HOSTINGER_SERVICE_NAME}\"
             else
-              echo "Systemd service not found or not loaded. Running in background with nohup..."
+              echo \"Systemd service not found or not loaded. Running in background with nohup...\"
               # Kill any existing process running on port 8000 or matching uvicorn main:app
-              sudo fuser -k 8000/tcp || pkill -f "uvicorn main:app" || true
+              sudo fuser -k 8000/tcp || pkill -f \"uvicorn main:app\" || true
               # Run in background with nohup, redirecting stdin/stdout/stderr to prevent termination and terminal hang
               nohup venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 < /dev/null &
               # Wait a moment to check if it started successfully
               sleep 3
-              if pgrep -f "uvicorn main:app" > /dev/null; then
-                echo "Application started successfully in the background!"
+              if pgrep -f \"uvicorn main:app\" > /dev/null; then
+                echo \"Application started successfully in the background!\"
               else
-                echo "Application failed to start. Showing log file:"
+                echo \"Application failed to start. Showing log file:\"
                 cat uvicorn.log
                 exit 1
               fi
@@ -134,3 +142,4 @@ jobs:
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
           HOSTINGER_SERVICE_NAME: ${{ secrets.HOSTINGER_SERVICE_NAME }}
+          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
