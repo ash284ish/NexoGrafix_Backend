@@ -85,12 +85,10 @@ jobs:
 
       - name: Create and set permissions for target directory
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -p "${HOSTINGER_SSH_PORT}" \
-            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            "${HOSTINGER_USER}@${HOSTINGER_HOST}" "
-            sudo mkdir -p \"${HOSTINGER_APP_DIR}\"
-            sudo chown -R ${HOSTINGER_USER}:${HOSTINGER_USER} \"${HOSTINGER_APP_DIR}\"
-            "
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -p "${HOSTINGER_SSH_PORT}"\
+          -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          "${HOSTINGER_USER}@${HOSTINGER_HOST}" \
+          "sudo mkdir -p \"${HOSTINGER_APP_DIR}\" && sudo chown -R \"${HOSTINGER_USER}\":\"${HOSTINGER_USER}\" \"${HOSTINGER_APP_DIR}\""
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
