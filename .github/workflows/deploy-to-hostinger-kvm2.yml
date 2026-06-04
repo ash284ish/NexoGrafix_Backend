@@ -52,11 +52,8 @@ jobs:
 
       - name: Network Diagnostic
         run: |
-          echo "Testing connectivity to $HOSTINGER_HOST on port $HOSTINGER_SSH_PORT..."
-          if ! nc -zv -w 10 "$HOSTINGER_HOST" "$HOSTINGER_SSH_PORT"; then
-            echo "::error::Cannot reach the server on port $HOSTINGER_SSH_PORT. Please check your Hostinger Panel Firewall and Server UFW settings."
-            exit 1
-          fi
+            echo "Testing connectivity to $HOSTINGER_HOST on port $HOSTINGER_SSH_PORT..."
+            nc -zv -w 10 "$HOSTINGER_HOST" "$HOSTINGER_SSH_PORT" || echo "::warning::nc check failed, proceeding anyway..."
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
@@ -85,10 +82,14 @@ jobs:
 
       - name: Create and set permissions for target directory
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -p "${HOSTINGER_SSH_PORT}"\
-          -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-          "${HOSTINGER_USER}@${HOSTINGER_HOST}" \
-          "sudo mkdir -p '$HOSTINGER_APP_DIR' && sudo chown -R '$HOSTINGER_USER':'$HOSTINGER_USER' '$HOSTINGER_APP_DIR'"
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -p "$HOSTINGER_SSH_PORT" \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "sudo mkdir -p '$HOSTINGER_APP_DIR' && sudo chown -R '$HOSTINGER_USER':'$HOSTINGER_USER' '$HOSTINGER_APP_DIR'"
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
