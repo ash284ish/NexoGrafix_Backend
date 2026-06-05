@@ -160,4 +160,4 @@ jobs:
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           HOSTINGER_APP_DIR: ${{ secrets.HOSTINGER_APP_DIR }}
           HOSTINGER_SERVICE_NAME: ${{ secrets.HOSTINGER_SERVICE_NAME }}
-          
+        
