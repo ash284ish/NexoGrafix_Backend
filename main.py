@@ -1,23 +1,30 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.routes import api_router
+from app.core.config import settings
 
 app = FastAPI(
     title="Nexografix CMS Backend"
 )
 
+# Lock CORS origins: wildcard + allow_credentials=True is rejected by browsers
+_allowed_origins = ["https://nexografix.com", "https://www.nexografix.com"]
+if settings.ENV != "production":
+    _allowed_origins += ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 @app.middleware("http")

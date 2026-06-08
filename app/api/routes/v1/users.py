@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserOut, UserLogin, LoginOut, ChangePasswordIn
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password, create_token, verify_token
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -15,13 +15,11 @@ def _get_current_user(db: Session, authorization: str | None):
         raise HTTPException(status_code=401, detail="Missing token")
 
     token = authorization.split(" ", 1)[1].strip()
-    if not token.startswith("user:"):
-        raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        user_id = int(token.split(":", 1)[1])
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        user_id = verify_token(token)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     user = db.get(User, user_id)
     if not user:
@@ -84,7 +82,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = f"user:{user.id}"
+    token = create_token(user.id)
     return {"access_token": token, "token_type": "bearer", "user": user}
 
 
