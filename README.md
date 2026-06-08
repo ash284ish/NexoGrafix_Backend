@@ -96,7 +96,7 @@ DATABASE_URL=postgresql://username:password@localhost:5432/nexografix_db
 Start the development server using Uvicorn:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8002
 ```
 
 The API will be available at `http://localhost:8000`.
