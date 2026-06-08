@@ -33,6 +33,12 @@ BASE_DIR = Path(__file__).resolve().parent
 UPLOADS_DIR = BASE_DIR / "app" / "public" / "uploads"
 
 app.mount(
+    "/api/uploads",
+    StaticFiles(directory=str(UPLOADS_DIR)),
+    name="api_uploads"
+)
+
+app.mount(
     "/uploads",
     StaticFiles(directory=str(UPLOADS_DIR)),
     name="uploads"
