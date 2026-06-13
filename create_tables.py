@@ -16,6 +16,10 @@ from app.models.role import Role
 from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.models.feedback import Feedback
+from app.models.sample_category import SampleCategory
+from app.models.sample_industry import SampleIndustry
+from app.models.sample import Sample
+from app.models.sample_lead import SampleLead
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,5 +28,7 @@ print(
     "pages, page_sections, page_section_media, "
     "nav_menus, nav_menu_items, "
     "newsletter_subscribers, contact_requests, media_assets, "
-    "feedbacks"
+    "feedbacks, sample_categories, sample_industries, "
+    "samples, sample_leads"
 )
+
